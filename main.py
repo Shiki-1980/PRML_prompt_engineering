@@ -9,6 +9,7 @@ import ast
 import os
 import json
 import time
+import argparse
 from utils.code_for_reasoning import *
 from openai import OpenAI
 from utils.methods import *
@@ -52,7 +53,7 @@ def load_jsonl(path):
 def check_accuracy(predictions, ground_truths):
     """
     功能：
-        计算模型预测结果与 ground truth 之间的“完全匹配”准确率。
+        计算模型预测结果与 ground truth 之间的"完全匹配"准确率。
         完全匹配指：预测网格与真实网格在尺寸和每个元素上都完全相同。
 
     输入参数：
@@ -108,6 +109,59 @@ def load_tasks_custom(path, data_range=None):
 
     return all_tasks
 
+def parse_data_range(data_str):
+    """
+    解析数据范围字符串，支持多种格式：
+    
+    输入示例:
+    - "5"         -> 5 (前5个)
+    - "7:12"      -> (7, 12) (索引7到12，左闭右开)
+    - "7,11,12"   -> [7, 11, 12] (特定索引)
+    - "3:5,8,10:12" -> 混合模式
+    - "all"       -> None (全部)
+    """
+    if data_str is None or data_str.lower() == "all":
+        return None
+    
+    # 移除空格
+    data_str = data_str.strip()
+    
+    # 检查是否只是数字
+    if data_str.isdigit():
+        return [int(data_str)]
+    
+    # 检查是否包含逗号（多个元素）
+    if "," in data_str:
+        indices = []
+        parts = data_str.split(",")
+        for part in parts:
+            part = part.strip()
+            if ":" in part:
+                # 处理范围
+                range_parts = part.split(":")
+                if len(range_parts) == 2:
+                    start = int(range_parts[0].strip())
+                    end = int(range_parts[1].strip())
+                    # 将范围内的所有索引添加到列表中
+                    indices.extend(range(start, end))
+            else:
+                # 单个索引
+                if part.isdigit():
+                    indices.append(int(part))
+        return indices
+    
+    # 检查是否包含冒号（范围）
+    if ":" in data_str:
+        range_parts = data_str.split(":")
+        if len(range_parts) == 2:
+            start = int(range_parts[0].strip())
+            end = int(range_parts[1].strip())
+            return (start, end)
+    
+    # 无法解析，返回全部
+    print(f"警告：无法解析数据范围 '{data_str}'，将加载全部数据")
+    return None
+
 
 def speak_and_listen(messages, model_name, temperature=1.0):
     """
@@ -122,7 +176,7 @@ def speak_and_listen(messages, model_name, temperature=1.0):
             {"role": "user", "content": "..."},
             ...
           ]
-        - 本函数只负责“发送请求 + 接收模型回答”，不做解析。
+        - 本函数只负责"发送请求 + 接收模型回答"，不做解析。
 
     输入参数：
         messages: 列表（list），对话内容，由 construct_prompt(d) 返回。
@@ -190,7 +244,7 @@ def print_report(results_detail, accuracy, tasks_count, model_name, columns=None
     print("=" * len(header_str))
     print(f"MODEL: {model_name} | TOTAL: {tasks_count} | ACC: {accuracy:.2%}")
 
-def main(data_range=None, method="direct"):
+def main(data_range=None, method="direct", sample_count=3, temperature=1.0):
     print(f"开始评测模型: {MODEL_NAME} | 使用方法: {method}")
     
     # 1. 加载数据
@@ -213,7 +267,7 @@ def main(data_range=None, method="direct"):
 
         # --- 核心调用：只需一行 ---
         # 你可以通过 kwargs 传入 sample_count 等参数
-        predicted_grid, process_status = solve_task(method, d, MODEL_NAME, sample_count=3)
+        predicted_grid, process_status = solve_task(method, d, MODEL_NAME, sample_count=sample_count)
         # -----------------------
 
         all_predictions.append(predicted_grid)
@@ -239,6 +293,66 @@ def main(data_range=None, method="direct"):
     print_report(results_detail, accuracy, len(tasks), MODEL_NAME, columns=["status"])
 
 if __name__ == "__main__":
-    target_tasks = None
-    main(data_range=target_tasks, method="direct")
-# 上面的函数只是作为示例框架，你可以任意修改和实现其中的逻辑
+    parser = argparse.ArgumentParser(
+        description="ARC 推理系统评测工具 - 多策略推理引擎",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+    数据范围示例:
+    --data 5           # 运行前5个任务
+    --data 7:12        # 运行索引7到12（左闭右开，即7,8,9,10,11）
+    --data 3,7,9       # 运行索引3,7,9这三个任务
+    --data 3:5,8,10:12 # 混合模式：运行3,4,8,10,11
+    --data all         # 运行全部任务（默认）
+
+    推理方法说明:
+    direct    - 基础推理，单次生成
+    sc        - 自我一致性，多次采样投票
+    reflexion - 反思修正，批判-改进循环
+    code      - 代码生成，生成Python代码执行
+    hybrid    - 混合模式，SC+反思
+
+    采样次数:
+    --sample 仅在 sc 和 hybrid 方法中有效
+            """
+        )
+    
+    parser.add_argument("--data", "-d",type=str,default="all",help="数据范围，支持多种格式（详见示例）")
+    parser.add_argument("--method", "-m",type=str,choices=["direct", "sc", "reflexion", "code", "hybrid"], default="direct",help="推理方法，从5种方法中选择")
+    parser.add_argument("--sample", "-s",type=int, default=3,help="采样次数（仅对 sc 和 hybrid 方法有效）")
+    parser.add_argument("--temperature", "-t",type=float,default=1.0,help="模型采样温度，控制随机性（0.0-2.0）")
+    parser.add_argument("--model",type=str,default=MODEL_NAME,help=f"模型名称（默认：{MODEL_NAME}）")
+    parser.add_argument("--api_key",type=str,default=API_KEY,help="API密钥（如不指定则使用默认）")
+    parser.add_argument("--base_url",type=str,default=BASE_URL,help=f"API基础URL（默认：{BASE_URL}）")
+    parser.add_argument("--data_path",type=str,default=DATA_PATH,help=f"数据文件路径（默认：{DATA_PATH}）")
+    args = parser.parse_args()
+    # 更新全局配置
+
+    API_KEY = args.api_key
+    BASE_URL = args.base_url
+    MODEL_NAME = args.model
+    DATA_PATH = args.data_path
+    
+    # 重新初始化客户端
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+    
+    # 解析数据范围
+    data_range = parse_data_range(args.data)
+    
+    print("=" * 60)
+    print("ARC 推理系统评测")
+    print("=" * 60)
+    print(f"模型: {MODEL_NAME}")
+    print(f"方法: {args.method}")
+    print(f"数据范围: {args.data}")
+    print(f"数据文件: {DATA_PATH}")
+    if args.method in ["sc", "hybrid"]:
+        print(f"采样次数: {args.sample}")
+    print("=" * 60)
+    
+    # 运行主程序
+    main(
+        data_range=data_range,
+        method=args.method,
+        sample_count=args.sample,
+        temperature=args.temperature
+    )
