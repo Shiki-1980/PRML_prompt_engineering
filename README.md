@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 ### 2. 配置API密钥
 
-在 `main.py`中设置您的API密钥：
+在 `main.py`中设置您的API密钥(内置的api-key不可用)：
 
 ```python
 API_KEY = 'your-api-key-here'
