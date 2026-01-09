@@ -23,8 +23,6 @@ DATA_PATH = "data/val.jsonl"
 BASE_URL = "https://api.deepseek.com"
 MODEL_NAME = "deepseek-chat"
 
-client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
-
 def load_jsonl(path):
     """
     功能：
