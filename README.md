@@ -126,7 +126,5 @@ DATA_PATH = "data/val.jsonl"
 | --------------- | ---- | ----- | -------- | --------------------------------------------- |
 | `--method`      | `-m` | str   | `direct` | 推理方法：direct, sc, reflexion, code, hybrid |
 | `--data`        | `-d` | str   | `all`    | 数据范围：数字、范围、列表或"all"             |
-| `--task_id`     | `-i` | str   | 无       | 指定任务ID运行单个任务                        |
-| `--task_index`  | `-x` | int   | 无       | 指定任务索引运行单个任务                      |
 | `--sample`      | `-s` | int   | 3        | 采样次数（仅sc/hybrid有效）                   |
 | `--temperature` | `-t` | float | 1.0      | 采样温度（0.0-2.0）                           |
