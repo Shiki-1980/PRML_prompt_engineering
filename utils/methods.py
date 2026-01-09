@@ -133,7 +133,7 @@ def get_code_result(d, model_name):
     print(" (Coding...) ", end="", flush=True)
     response_1 = speak_and_listen(messages, model_name)
     code_1 = extract_code(response_1)
-    print(f" [Code Generated]: {code_1} ", end="", flush=True)
+    print(f" [Code Generated] ", end="", flush=True)
     # 尝试执行
     success_1, result_1 = execute_and_test(code_1, d['train'], d['test'][0]['input'])
     

@@ -40,12 +40,13 @@ pip install -r requirements.txt
 
 ### 2. 配置API密钥
 
-在 `main.py`中设置您的API密钥(内置的api-key不可用)：
+在 `config.py`中完成配置：
 
 ```python
-API_KEY = 'your-api-key-here'
-BASE_URL = "https://api.deepseek.com"  # 或其他API端点
-MODEL_NAME = "deepseek-chat"           # 或其他模型
+API_KEY = "sk-df8bb3ffbc2642db80e285a4e8c2d0f9"  #仅作示例，请使用自己的
+BASE_URL = "https://api.deepseek.com"
+MODEL_NAME = "deepseek-chat"
+DATA_PATH = "data/val.jsonl"
 ```
 
 系统提供5种推理策略，可通过 `--method`参数选择：
