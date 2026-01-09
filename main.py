@@ -16,12 +16,22 @@ from utils.methods import *
 from construct_prompt import *
 
 
-# API_KEY='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'
-API_KEY='sk-1e8eb86fea834022b8a231dba794b00d'
-# MODEL_NAME = "nex-agi/deepseek-v3.1-nex-n1:free"
-DATA_PATH = "data/val.jsonl"
-BASE_URL = "https://api.deepseek.com"
-MODEL_NAME = "deepseek-chat"
+try:
+    from config import (
+        API_KEY, 
+        BASE_URL, 
+        MODEL_NAME, 
+        DATA_PATH,
+    )
+except ImportError as e:
+    print(f"⚠️  无法导入配置文件: {e}")
+    print("⚠️  使用默认配置")
+    API_KEY = "sk-1e8eb86fea834022b8a231dba794b00d"
+    BASE_URL = "https://api.deepseek.com"
+    MODEL_NAME = "deepseek-chat"
+    DATA_PATH = "data/val.jsonl"
+
+client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
 def load_jsonl(path):
     """
@@ -318,20 +328,9 @@ if __name__ == "__main__":
     parser.add_argument("--method", "-m",type=str,choices=["direct", "sc", "reflexion", "code", "hybrid"], default="direct",help="推理方法，从5种方法中选择")
     parser.add_argument("--sample", "-s",type=int, default=3,help="采样次数（仅对 sc 和 hybrid 方法有效）")
     parser.add_argument("--temperature", "-t",type=float,default=1.0,help="模型采样温度，控制随机性（0.0-2.0）")
-    parser.add_argument("--model",type=str,default=MODEL_NAME,help=f"模型名称（默认：{MODEL_NAME}）")
-    parser.add_argument("--api_key",type=str,default=API_KEY,help="API密钥（如不指定则使用默认）")
-    parser.add_argument("--base_url",type=str,default=BASE_URL,help=f"API基础URL（默认：{BASE_URL}）")
-    parser.add_argument("--data_path",type=str,default=DATA_PATH,help=f"数据文件路径（默认：{DATA_PATH}）")
     args = parser.parse_args()
     # 更新全局配置
 
-    API_KEY = args.api_key
-    BASE_URL = args.base_url
-    MODEL_NAME = args.model
-    DATA_PATH = args.data_path
-    
-    # 重新初始化客户端
-    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
     
     # 解析数据范围
     data_range = parse_data_range(args.data)

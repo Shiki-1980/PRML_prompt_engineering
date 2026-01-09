@@ -21,6 +21,7 @@ ARC-Solver/
 │   └── methods.py            # 各种推理方法实现
 ├── data/
 │   └── val.jsonl             # ARC验证数据集
+├── config.py                  # API配置和模型设置
 └── requirements.txt          # 依赖列表
 ```
 
@@ -107,30 +108,24 @@ python main.py --data all --method direct
 
 ## 模型参数配置
 
-### 基本API设置
+### 配置文件说明
 
-```bash
-# 指定模型名称
-python main.py --model deepseek-chat --method direct --data 5
-# 自定义API密钥和端点
-python main.py --api_key your-key-here --base_url https://api.example.com --method direct --data 5
-# 设置采样温度（控制随机性）
-python main.py --temperature 0.8 --method direct --data 5
-# 设置采样次数（仅对sc和hybrid有效）
-python main.py --sample 5 --method sc --data 5
+在 `config.py`中配置API设置：
+
+```python
+API_KEY = "sk-df8bb3ffbc2642db80e285a4e8c2d0f9"  #仅作示例，请使用自己的
+BASE_URL = "https://api.deepseek.com"
+MODEL_NAME = "deepseek-chat"
+DATA_PATH = "data/val.jsonl"
 ```
 
 ## 完整参数参考
 
-| 参数            | 缩写 | 类型  | 默认值                   | 说明                                          |
-| --------------- | ---- | ----- | ------------------------ | --------------------------------------------- |
-| `--method`      | `-m` | str   | `direct`                 | 推理方法：direct, sc, reflexion, code, hybrid |
-| `--data`        | `-d` | str   | `all`                    | 数据范围：数字、范围、列表或"all"             |
-| `--task_id`     | `-i` | str   | 无                       | 指定任务ID运行单个任务                        |
-| `--task_index`  | `-x` | int   | 无                       | 指定任务索引运行单个任务                      |
-| `--sample`      | `-s` | int   | 3                        | 采样次数（仅sc/hybrid有效）                   |
-| `--temperature` | `-t` | float | 1.0                      | 采样温度（0.0-2.0）                           |
-| `--model`       | 无   | str   | deepseek-chat            | 模型名称                                      |
-| `--api_key`     | 无   | str   | 内置默认                 | API密钥                                       |
-| `--base_url`    | 无   | str   | https://api.deepseek.com | API端点                                       |
-| `--data_path`   | 无   | str   | data/val.jsonl           | 数据文件路径                                  |
+| 参数            | 缩写 | 类型  | 默认值   | 说明                                          |
+| --------------- | ---- | ----- | -------- | --------------------------------------------- |
+| `--method`      | `-m` | str   | `direct` | 推理方法：direct, sc, reflexion, code, hybrid |
+| `--data`        | `-d` | str   | `all`    | 数据范围：数字、范围、列表或"all"             |
+| `--task_id`     | `-i` | str   | 无       | 指定任务ID运行单个任务                        |
+| `--task_index`  | `-x` | int   | 无       | 指定任务索引运行单个任务                      |
+| `--sample`      | `-s` | int   | 3        | 采样次数（仅sc/hybrid有效）                   |
+| `--temperature` | `-t` | float | 1.0      | 采样温度（0.0-2.0）                           |
